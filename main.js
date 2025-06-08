@@ -32,8 +32,8 @@ for (let i = 0; i < 9; i++) {
     }
 }
 
-for(let i = 0; i < 100; i++) {
-    board.iterate();
+for(let i = 0; i < 50; i++) {
+    board.iterate(i);
 }
 
 let str = "";

@@ -1,4 +1,4 @@
-import { createBoard, eliminateOptionsByColumn, eliminateOptionsByRow, placeValueInBox, placeValueInColumn, placeValueInRow, reducePossibleValuesOfACell } from "./tools.js";
+import { createBoard, eliminateOptionsByColumn, eliminateOptionsByColumns, eliminateOptionsByRow, eliminateOptionsByRows, placeValueInBox, placeValueInColumn, placeValueInRow, reducePossibleValuesOfACell } from "./tools.js";
 
 
 // Given a board of possible values, return a board with cells with only one value
@@ -65,7 +65,7 @@ class Board {
         }
     }
 
-    iterate = () => {
+    iterate = (iteration = 1000) => {
         for (let i = 0; i < 9; i++) {
             for (let j = 0; j < 9; j++) {
                 if(this.board[i][j]) continue;
@@ -93,6 +93,8 @@ class Board {
             }
         }
 
+        // eliminateOptionsByRows(this.board, this.possibleValues, 2, 2, 8, 7);
+
         // For each box/value/(column and row)combo
         for (let boxRow = 0; boxRow < 3; boxRow++) {
             for (let boxColumn = 0; boxColumn < 3; boxColumn++) {
@@ -101,16 +103,23 @@ class Board {
                     for (let i = 0; i < 9; i++) {
                         if(Math.floor(i / 3) === boxColumn) {
                             eliminateOptionsByColumn(this.board, this.possibleValues, boxRow, boxColumn, i, value);
+                            
+                            if(iteration > 10) {
+                                eliminateOptionsByColumns(this.board, this.possibleValues, boxRow, boxColumn, i, value);
+                            }
                         }
                         // If row is in this box
                         if(Math.floor(i / 3) === boxRow) {
                             eliminateOptionsByRow(this.board, this.possibleValues, boxRow, boxColumn, i, value);
+                            
+                            if(iteration > 10) {
+                                eliminateOptionsByRows(this.board, this.possibleValues, boxRow, boxColumn, i, value);
+                            }
                         }
                     }
                 }
             }
-        }
-        
+        }        
 
         this.board = possibleBoardToBoard(this.possibleValues, this.board);
     }

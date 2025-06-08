@@ -18,6 +18,18 @@ export const cellToBox = (row, column) => {
     return {row: Math.floor(row / 3), column: Math.floor(column / 3)};
 }
 
+export const getOtherRowsOrColumnsInBox = (rowOrColumn) => {
+    if(rowOrColumn === 0) return [1, 2];
+    if(rowOrColumn === 1) return [0, 2];
+    if(rowOrColumn === 2) return [0, 1];
+    if(rowOrColumn === 3) return [4, 5];
+    if(rowOrColumn === 4) return [3, 5];
+    if(rowOrColumn === 5) return [3, 4];
+    if(rowOrColumn === 6) return [7, 8];
+    if(rowOrColumn === 7) return [6, 8];
+    if(rowOrColumn === 8) return [6, 7];
+}
+
 export const getBoxCells = (boxRow, boxColumn) => {
     return boxCells[boxRow][boxColumn];
 }
@@ -237,6 +249,76 @@ export const eliminateOptionsByRow = (board, possibleValues, boxRow, boxColumn, 
         if(possibleValues[row][column][value - 1]) {
             possibleValues[row][column][value - 1] = false;
             console.log("We know ["+(row+1)+", "+(column+1)+"] != "+value+" because "+value+" in row "+(row + 1)+" must be in box ["+(boxRow + 1)+", "+(boxColumn+1)+"]");
+        }
+    }
+}
+
+// Eliminate values IN this box if BOTH other boxes in this row require the value to be in one of other two rows
+export const eliminateOptionsByRows = (board, possibleValues, boxRow, boxColumn, row, value) => {
+    if(isValueInBox(board, boxRow, boxColumn, value) || isValueInRow(board, row, value)) {
+        return;
+    }
+    // Other boxes
+    const otherBoxColumns = getOtherRowsOrColumnsInBox(boxColumn);
+    // Make sure both other boxes don't have this value
+    if(isValueInBox(board, boxRow, otherBoxColumns[0], value) || isValueInBox(board, boxRow, otherBoxColumns[1], value)) return;
+    // See if in both other boxes, this value cannot be in this row
+    for (let i = 0; i < 2; i++) {
+        const cells = getBoxCells(boxRow, otherBoxColumns[i]);
+        for (let j = 0; j < 9; j++) {
+            // If this value can be in another box in the same row
+            if(!board[cells[j].row][cells[j].column] && cells[j].row === row && possibleValues[cells[j].row][cells[j].column][value - 1]) {
+                // console.log(cells[j].row, cells[j].column, possibleValues[cells[j].row][cells[j].column]);
+                return;
+            }
+        }
+    }
+    // If still here, then the value in this row must be in this box
+    const cells = getBoxCells(boxRow, boxColumn);
+    for (let i = 0; i < 9; i++) {
+        // If already an item
+        if(board[cells[i].row][cells[i].column]) continue;
+        // If not in this row, remove from possible values
+        if(cells[i].row !== row) {
+            if(possibleValues[cells[i].row][cells[i].column][value - 1]) {
+                possibleValues[cells[i].row][cells[i].column][value - 1] = false;
+                console.log("We know ["+(cells[i].row+1)+", "+(cells[i].column+1)+"] != "+value+" because "+value+" must be in this row in one of the other two boxes");
+            }
+        }
+    }
+}
+
+// Eliminate values IN this box if BOTH other boxes in this column require the value to be in one of other two columns
+export const eliminateOptionsByColumns = (board, possibleValues, boxRow, boxColumn, column, value) => {
+    if(isValueInBox(board, boxRow, boxColumn, value) || isValueInColumn(board, column, value)) {
+        return;
+    }
+    // Other boxes
+    const otherBoxRows = getOtherRowsOrColumnsInBox(boxRow);
+    // Make sure both other boxes don't have this value
+    if(isValueInBox(board, otherBoxRows[0], boxColumn, value) || isValueInBox(board, otherBoxRows[1], boxColumn, value)) return;
+    // See if in both other boxes, this value cannot be in this row
+    for (let i = 0; i < 2; i++) {
+        const cells = getBoxCells(otherBoxRows[i], boxColumn);
+        for (let j = 0; j < 9; j++) {
+            // If this value can be in another box in the same column
+            if(!board[cells[j].row][cells[j].column] && cells[j].column === column && possibleValues[cells[j].row][cells[j].column][value - 1]) {
+                // console.log(cells[j].row, cells[j].column, possibleValues[cells[j].row][cells[j].column]);
+                return;
+            }
+        }
+    }
+    // If still here, then the value in this column must be in this box
+    const cells = getBoxCells(boxRow, boxColumn);
+    for (let i = 0; i < 9; i++) {
+        // If already an item
+        if(board[cells[i].row][cells[i].column]) continue;
+        // If in this column, remove from possible values
+        if(cells[i].column !== column) {
+            if(possibleValues[cells[i].row][cells[i].column][value - 1]) {
+                possibleValues[cells[i].row][cells[i].column][value - 1] = false;
+                console.log("We know ["+(cells[i].row+1)+", "+(cells[i].column+1)+"] != "+value+" because "+value+" must be in this column in one of the other two boxes");
+            }
         }
     }
 }
