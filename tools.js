@@ -18,6 +18,26 @@ export const cellToBox = (row, column) => {
     return {row: Math.floor(row / 3), column: Math.floor(column / 3)};
 }
 
+// See if two arrays are the same
+export const comparePossibleValues = (possibleValuesArrays) => {
+    for (let i = 0; i < 9; i++) {
+        const possibleValue = possibleValuesArrays[0][i];
+        for (let j = 1; j < possibleValuesArrays.length; j++) {
+            if(possibleValuesArrays[j][i] !== possibleValue) return false;
+        }
+    }
+    return true;
+}
+
+// See how many elements in an array are true
+export const countPossibleValues = (possibleValues) => {
+    let count = 0;
+    for (let i = 0; i < 9; i++) {
+        if(possibleValues[i]) count++;
+    }
+    return count;
+}
+
 export const getOtherRowsOrColumnsInBox = (rowOrColumn) => {
     if(rowOrColumn === 0) return [1, 2];
     if(rowOrColumn === 1) return [0, 2];
@@ -318,6 +338,64 @@ export const eliminateOptionsByColumns = (board, possibleValues, boxRow, boxColu
             if(possibleValues[cells[i].row][cells[i].column][value - 1]) {
                 possibleValues[cells[i].row][cells[i].column][value - 1] = false;
                 console.log("We know ["+(cells[i].row+1)+", "+(cells[i].column+1)+"] != "+value+" because "+value+" must be in this column in one of the other two boxes");
+            }
+        }
+    }
+}
+
+// See if two squares in a row have the same possible values and there's two possible values. If so, then none of the other squares in the row
+// can have these values
+export const eliminateOptionsInRowsByTwoPossibleValues = (board, possibleValues) => {
+    for (let row = 0; row < 9; row++) {
+        for (let column1 = 0; column1 < 8; column1++) {
+            for (let column2 = column1 + 1; column2 < 9; column2++) {
+                const possibleValues1 = possibleValues[row][column1];
+                const possibleValues2 = possibleValues[row][column2];
+                // If both have a count of two and the values are the same, remove these possible values from the rest of the row
+                if(countPossibleValues(possibleValues1) === 2 && countPossibleValues(possibleValues2) === 2 && comparePossibleValues([possibleValues1, possibleValues2])) {
+                    for (let removeColumn = 0; removeColumn < 9; removeColumn++) {
+                        // Skip over the two columns
+                        if(removeColumn === column1 || removeColumn === column2) continue;
+                        // Remove the values
+                        for (let value = 0; value < 9; value++) {
+                            if(possibleValues1[value] && !board[row][removeColumn] && possibleValues[row][removeColumn][value]) {
+                                possibleValues[row][removeColumn][value] = false;
+                                console.log("We know ["+(row+1)+", "+(removeColumn+1)+"] != "+value+" because "+value+" must be in column "+(column1+1)+" or "+(column2+1)+" in this row.");
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+// See if three squares in a row have the same possible values and there's three possible values. If so, then none of the other squares in the row
+// can have these values
+export const eliminateOptionsInRowsByThreePossibleValues = (board, possibleValues) => {
+    for (let row = 0; row < 9; row++) {
+        for (let column1 = 0; column1 < 7; column1++) {
+            for (let column2 = column1 + 1; column2 < 8; column2++) {
+                for (let column3 = column2 + 1; column3 < 9; column3++) {
+                    const possibleValues1 = possibleValues[row][column1];
+                    const possibleValues2 = possibleValues[row][column2];
+                    const possibleValues3 = possibleValues[row][column3];
+                    // If both have a count of three and the values are the same, remove these possible values from the rest of the row
+                    if(countPossibleValues(possibleValues1) === 3 && countPossibleValues(possibleValues2) === 3 &&
+                        countPossibleValues(possibleValues3) && comparePossibleValues([possibleValues1, possibleValues2, possibleValues3])) {
+                        for (let removeColumn = 0; removeColumn < 9; removeColumn++) {
+                            // Skip over the three columns
+                            if(removeColumn === column1 || removeColumn === column2 || removeColumn === column3) continue;
+                            // Remove the values
+                            for (let value = 0; value < 9; value++) {
+                                if(possibleValues1[value] && !board[row][removeColumn] && possibleValues[row][removeColumn][value]) {
+                                    possibleValues[row][removeColumn][value] = false;
+                                    console.log("We know ["+(row+1)+", "+(removeColumn+1)+"] != "+(value+1)+" because "+(value+1)+" must be in column "+(column1+1)+", "+(column2+1)+", or "+(column3+1)+" in this row.");
+                                }
+                            }
+                        }
+                    }
+                }
             }
         }
     }

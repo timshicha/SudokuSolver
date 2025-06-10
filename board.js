@@ -1,4 +1,4 @@
-import { createBoard, eliminateOptionsByColumn, eliminateOptionsByColumns, eliminateOptionsByRow, eliminateOptionsByRows, placeValueInBox, placeValueInColumn, placeValueInRow, reducePossibleValuesOfACell } from "./tools.js";
+import { cellToBox, createBoard, eliminateOptionsByColumn, eliminateOptionsByColumns, eliminateOptionsByRow, eliminateOptionsByRows, eliminateOptionsInRowsByThreePossibleValues, eliminateOptionsInRowsByTwoPossibleValues, isValueInBox, isValueInColumn, isValueInRow, placeValueInBox, placeValueInColumn, placeValueInRow, reducePossibleValuesOfACell } from "./tools.js";
 
 
 // Given a board of possible values, return a board with cells with only one value
@@ -66,6 +66,24 @@ class Board {
     }
 
     iterate = (iteration = 1000) => {
+
+        // Update possible values
+        for (let row = 0; row < 9; row++) {
+            for (let column = 0; column < 9; column++) {
+                for (let value = 1; value <= 9; value++) {
+                    let cellBox = cellToBox(row, column);
+                    if(isValueInBox(this.board, cellBox.row, cellBox.column, value)) {
+                        this.possibleValues[row][column][value - 1] = false;
+                    }
+                    if(isValueInRow(this.board, row, value)) {
+                        this.possibleValues[row][column][value - 1] = false;
+                    }
+                    if(isValueInColumn(this.board, column, value)) {
+                        this.possibleValues[row][column][value - 1] = false;
+                    }
+                }
+            }
+        }
         for (let i = 0; i < 9; i++) {
             for (let j = 0; j < 9; j++) {
                 if(this.board[i][j]) continue;
@@ -93,8 +111,6 @@ class Board {
             }
         }
 
-        // eliminateOptionsByRows(this.board, this.possibleValues, 2, 2, 8, 7);
-
         // For each box/value/(column and row)combo
         for (let boxRow = 0; boxRow < 3; boxRow++) {
             for (let boxColumn = 0; boxColumn < 3; boxColumn++) {
@@ -119,7 +135,10 @@ class Board {
                     }
                 }
             }
-        }        
+        }
+        
+        eliminateOptionsInRowsByTwoPossibleValues(this.board, this.possibleValues);
+        eliminateOptionsInRowsByThreePossibleValues(this.board, this.possibleValues);
 
         this.board = possibleBoardToBoard(this.possibleValues, this.board);
     }
