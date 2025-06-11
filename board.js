@@ -1,35 +1,21 @@
-import { cellToBox, createBoard, eliminateOptionsByColumn, eliminateOptionsByColumns, eliminateOptionsByRow, eliminateOptionsByRows, eliminateOptionsInRowsByThreePossibleValues, eliminateOptionsInRowsByTwoPossibleValues, isValueInBox, isValueInColumn, isValueInRow, placeValueInBox, placeValueInColumn, placeValueInRow, reducePossibleValuesOfACell } from "./tools.js";
+import { cellToBox, countPossibleValues, createBoard, eliminateOptionsByColumn, eliminateOptionsByColumns, eliminateOptionsByRow, eliminateOptionsByRows, eliminateOptionsInBoxesByThreePossibleValues, eliminateOptionsInBoxesByTwoPossibleValues, eliminateOptionsInColumnsByThreePossibleValues, eliminateOptionsInColumnsByTwoPossibleValues, eliminateOptionsInRowsByThreePossibleValues, eliminateOptionsInRowsByTwoPossibleValues, getCount, insertValue, isPossible, isValueInBox, isValueInColumn, isValueInRow, placeValueInBox, placeValueInColumn, placeValueInRow, reducePossibleValuesOfACell } from "./tools.js";
 
 
 // Given a board of possible values, return a board with cells with only one value
 // filled in and the rest left blank. If board is provided, update on the board
-const possibleBoardToBoard = (possibleBoard, providedBoard=null) => {
-    const board = createBoard();
-    if(providedBoard) {
-        for (let i = 0; i < 9; i++) {
-            for (let j = 0; j < 9; j++) {
-                board[i][j] = providedBoard[i][j];
-            }
-        }
-    }
+const possibleBoardToBoard = (board, possibleValues) => {
     // Any cells that have only one possible value, fill that cell
     // with that possible value
     for (let i = 0; i < 9; i++) {
         for (let j = 0; j < 9; j++) {
-            if(board[i][j]) continue;
-            let value = 0;
-            for (let k = 0; k < 9; k++) {
-                if(possibleBoard[i][j][k]) {
-                    if(value) {
-                        value = 0;
-                        break;
+            if(countPossibleValues(possibleValues[i][j]) === 1) {
+                // Get the possible value
+                for (let value = 1; value <= 9; value++) {
+                    if(isPossible(board, possibleValues, i, j, value)) {
+                        console.log(`${getCount()}... Insert ${value} to [${i+1}, ${j+1}] since no other value can go here.`);
+                        insertValue(board, possibleValues, i, j, value);
                     }
-                    value = k + 1;
                 }
-            }
-            if(value) {
-                board[i][j] = value;
-                console.log("One possible value: ["+(i+1)+", "+(j+1)+"] = "+value);
             }
         }
     }
@@ -51,18 +37,12 @@ class Board {
             // For each cell
             for (let j = 0; j < 9; j++) {
                 this.possibleValues[i][j] = new Array(9).fill(true);
-                this.theoreticalBoard[i][j] = new Array(9);
-                // For each possibility of a cell
-                for (let k = 0; k < 9; k++) {
-                    this.theoreticalBoard[i][j][k] = createBoard();
-                    for (let iBoard = 0; iBoard < 9; iBoard++) {
-                        for (let jBoard = 0; jBoard < 9; jBoard++) {
-                            this.theoreticalBoard[i][j][k][iBoard][jBoard] = new Array(9).fill(true);
-                        }
-                    }
-                }
             }
         }
+    }
+
+    insertValue = (row, column, value) => {
+        insertValue(this.board, this.possibleValues, row, column, value);
     }
 
     iterate = (iteration = 1000) => {
@@ -118,17 +98,21 @@ class Board {
                     // For each row or column
                     for (let i = 0; i < 9; i++) {
                         if(Math.floor(i / 3) === boxColumn) {
-                            eliminateOptionsByColumn(this.board, this.possibleValues, boxRow, boxColumn, i, value);
                             
                             if(iteration > 10) {
+                                eliminateOptionsByColumn(this.board, this.possibleValues, boxRow, boxColumn, i, value);
+                            }
+                            if(iteration > 15) {
                                 eliminateOptionsByColumns(this.board, this.possibleValues, boxRow, boxColumn, i, value);
                             }
                         }
                         // If row is in this box
                         if(Math.floor(i / 3) === boxRow) {
-                            eliminateOptionsByRow(this.board, this.possibleValues, boxRow, boxColumn, i, value);
                             
                             if(iteration > 10) {
+                                eliminateOptionsByRow(this.board, this.possibleValues, boxRow, boxColumn, i, value);
+                            }
+                            if(iteration > 15) {
                                 eliminateOptionsByRows(this.board, this.possibleValues, boxRow, boxColumn, i, value);
                             }
                         }
@@ -137,10 +121,16 @@ class Board {
             }
         }
         
-        eliminateOptionsInRowsByTwoPossibleValues(this.board, this.possibleValues);
-        eliminateOptionsInRowsByThreePossibleValues(this.board, this.possibleValues);
+        if(iteration > 20) {
+            eliminateOptionsInRowsByTwoPossibleValues(this.board, this.possibleValues);
+            eliminateOptionsInRowsByThreePossibleValues(this.board, this.possibleValues);
+            eliminateOptionsInColumnsByTwoPossibleValues(this.board, this.possibleValues);
+            eliminateOptionsInColumnsByThreePossibleValues(this.board, this.possibleValues);
+            eliminateOptionsInBoxesByTwoPossibleValues(this.board, this.possibleValues);
+            eliminateOptionsInBoxesByThreePossibleValues(this.board, this.possibleValues);
+        }
 
-        this.board = possibleBoardToBoard(this.possibleValues, this.board);
+        this.board = possibleBoardToBoard(this.board, this.possibleValues);
     }
 }
 
